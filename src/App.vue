@@ -29,6 +29,24 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 28px;
 }
+.table.b-table>thead>tr>th {
+  background-color: white;
+  position: sticky;
+  position: -webkit-sticky;
+  top: 0;
+  z-index: 2;
+} 
+
+td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* white-space: nowrap;  */
+    max-width: 250px;
+    word-break: break-word;
+}
+/* td{
+  max-width: 300px;
+} */
 </style>

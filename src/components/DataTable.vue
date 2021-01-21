@@ -1,12 +1,12 @@
 <template>
   <b-container fluid>
-    <b-row class="row m-4 p-3">
+    <!-- <b-row class="row m-4 p-3">
       <input type="text" placeholder="Enter Text" v-model="text" />
       <button class="btn btn-primary ml-2" @click="postData(text)">POST</button>
     </b-row>
     <b-row class="row m-4 p-3">
       <button class="btn btn-success" @click="getTable">GET DATA</button>
-    </b-row>
+    </b-row> -->
     <!-- User Interface controls -->
     <b-row>
       <!-- <b-col lg="6" class="my-1">
@@ -64,7 +64,23 @@
         </b-form-group>
       </b-col> -->
 
-      <b-col lg="6" class="my-1">
+      <b-col lg="2" class="text-left">
+        <button class="btn btn-success" @click="getTable">GET DATA</button>
+      </b-col>
+      <b-col lg="2" class="text-left">
+        <button class="btn btn-success" @click="wrapTable">
+          {{ wrap ? "Remove Wrap" : "Wrap Data" }}
+        </button>
+      </b-col>
+
+      <b-col lg="3" class="">
+        <input type="text" placeholder="Enter Text" v-model="text" />
+        <button class="btn btn-primary ml-2" @click="postData(text)">
+          POST
+        </button>
+      </b-col>
+
+      <b-col lg="5" class="my-1 ml-auto">
         <b-form-group
           label="Filter"
           label-for="filter-input"
@@ -116,7 +132,7 @@
         </b-form-group>
       </b-col> -->
 
-      <b-col sm="5" md="6" class="my-1">
+      <!-- <b-col sm="5" md="6" class="my-1">
         <b-form-group
           label="Per page"
           label-for="per-page-select"
@@ -134,9 +150,9 @@
             size="sm"
           ></b-form-select>
         </b-form-group>
-      </b-col>
+      </b-col> -->
 
-      <b-col sm="7" md="6" class="my-1">
+      <!-- <b-col sm="7" md="6" class="my-1">
         <b-pagination
           v-model="currentPage"
           :total-rows="totalRows"
@@ -145,7 +161,7 @@
           size="sm"
           class="my-0"
         ></b-pagination>
-      </b-col>
+      </b-col> -->
     </b-row>
 
     <!-- Main table element -->
@@ -154,7 +170,6 @@
       striped
       :fields="fields"
       :current-page="currentPage"
-      :per-page="perPage"
       :filter="filter"
       :filter-included-fields="filterOn"
       :sort-by.sync="sortBy"
@@ -164,10 +179,58 @@
       show-empty
       small
       @filtered="onFiltered"
+      class="mt-3"
+      outlined
+      bordered
     >
-      <template #cell(name)="row">
-        {{ row.value.first }} {{ row.value.last }}
+      <template #cell(se_sort)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{ row.item.se_sort }}
+        </text-highlight>
       </template>
+
+      <template #cell(site_name)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{row.item.site_name}}
+        </text-highlight>
+      </template>
+
+      <template #cell(url)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{row.item.url}}
+        </text-highlight>
+      </template>
+
+      <template #cell(snippet)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{row.item.snippet}}
+        </text-highlight>
+      </template>
+
+      <template #cell(engine)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{row.item.engine}}
+        </text-highlight>
+      </template>
+
+      <template #cell(id)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{row.item.id}}
+        </text-highlight>
+      </template>
+
+      <template #cell(se_index_on_page)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{row.item.se_index_on_page}}
+        </text-highlight>
+      </template>
+
+      <template #cell(se_page)="row">
+        <text-highlight :queries="filter" :class="wrap ? 'wrap' : 'nowrap'">
+          {{row.item.se_page}}
+        </text-highlight>
+      </template>
+
       <!-- 
       <template #cell(actions)="row">
         <b-button size="sm" @click="info(row.item, row.index, $event.target)" class="mr-1">
@@ -178,26 +241,27 @@
         </b-button>
       </template> -->
 
-      <template #row-details="row">
+      <!-- <template #row-details="row">
         <b-card>
           <ul>
-            <li v-for="(value, key) in row.item" :key="key">
+            <li ref="table" v-for="(value, key) in row.item" :key="key">
               {{ key }}: {{ value }}
             </li>
           </ul>
         </b-card>
-      </template>
+      </template> -->
     </b-table>
 
     <!-- Info modal -->
-    <b-modal
+    <!-- <b-modal
       :id="infoModal.id"
       :title="infoModal.title"
       ok-only
       @hide="resetInfoModal"
     >
       <pre>{{ infoModal.content }}</pre>
-    </b-modal>
+    </b-modal> -->
+    <b-spinner v-if="loader" style="width: 3rem; height: 3rem;" label="Large Spinner"></b-spinner>
   </b-container>
 </template>
 
@@ -207,6 +271,7 @@ export default {
   data() {
     return {
       items: [],
+      loader:false,
       // itemss: [
       //   { isActive: true, age: 40, name: { first: 'Dickerson', last: 'Macdonald' } },
       //   { isActive: false, age: 21, name: { first: 'Larsen', last: 'Shaw' } },
@@ -233,43 +298,43 @@ export default {
       // ],
       fields: [
         {
+          key: "se_sort",
+          label: "Se Sort",
+          sortable: true,
+          class: "text-left",
+        },
+        {
+          key: "site_name",
+          label: "Site Name",
+          sortable: true,
+          class: "text-left",
+        },
+        { key: "url", label: "URL", sortable: true, class: "text-left" },
+        {
+          key: "snippet",
+          label: "Snippet",
+          sortable: true,
+          class: "text-left",
+        },
+        {
           key: "engine",
           label: "Engine",
           sortable: true,
           sortDirection: "desc",
         },
-        { key: "id", label: "Id", sortable: true, class: "text-center" },
+        { key: "id", label: "ID", sortable: true, class: "text-left" },
         {
           key: "se_index_on_page",
-          label: "Se index on page",
+          label: "Se Index on Page",
           sortable: true,
-          class: "text-center",
+          class: "text-left",
         },
         {
           key: "se_page",
-          label: "Se page",
+          label: "Se Page",
           sortable: true,
-          class: "text-center",
+          class: "text-left",
         },
-        {
-          key: "se_sort",
-          label: "Se sort",
-          sortable: true,
-          class: "text-center",
-        },
-        {
-          key: "site_name",
-          label: "Site name",
-          sortable: true,
-          class: "text-center",
-        },
-        {
-          key: "snippet",
-          label: "Snippet",
-          sortable: true,
-          class: "text-center",
-        },
-        { key: "url", label: "URL", sortable: true, class: "text-center" },
         //   {key: 'isActive',label: 'Is Active',formatter: (value,) => {
         //       return value ? 'Yes' : 'No'
         //     },
@@ -281,8 +346,9 @@ export default {
       ],
       totalRows: 1,
       currentPage: 1,
-      perPage: 5,
-      pageOptions: [5, 10, 15, { value: 100, text: "Show a lot" }],
+      wrap: false,
+      // perPage: 5,
+      // pageOptions: [5, 10, 15, { value: 100, text: "Show a lot" }],
       sortBy: "",
       sortDesc: false,
       sortDirection: "asc",
@@ -303,9 +369,14 @@ export default {
       console.log("changed");
     },
   },
-
-  created() {},
-
+  filters: {
+    highlight: function (value, query) {
+      return value.replace(
+        new RegExp(query, "ig"),
+        "<span class='blue'>" + query + "</span>"
+      );
+    },
+  },
   computed: {
     sortOptions() {
       // Create an options list from our fields
@@ -324,8 +395,12 @@ export default {
   },
 
   methods: {
+    wrapTable() {
+      this.wrap = !this.wrap;
+    },
     getTable() {
       this.filter = " ";
+      this.loader = true;
       this.dataTable();
     },
     info(item, index, button) {
@@ -333,10 +408,10 @@ export default {
       this.infoModal.content = JSON.stringify(item, null, 2);
       this.$root.$emit("bv::show::modal", this.infoModal.id, button);
     },
-    resetInfoModal() {
-      this.infoModal.title = "";
-      this.infoModal.content = "";
-    },
+    // resetInfoModal() {
+    //   this.infoModal.title = "";
+    //   this.infoModal.content = "";
+    // },
     onFiltered(filteredItems) {
       // Trigger pagination to update the number of buttons/pages due to filtering
       this.totalRows = filteredItems.length;
@@ -344,11 +419,14 @@ export default {
     },
 
     dataTable() {
+      this.filter = "";
       axios.get(this.apiUrl).then((response) => {
-        console.log(response.data);
         this.items.push(response.data);
-        console.log("table data", this.items);
-      });
+        this.loader = false;
+      }).catch((error) => {
+        console.log(error);
+        this.loader = false;
+      })
     },
     postData(value) {
       axios.post(this.apiUrl, { value });
@@ -356,3 +434,9 @@ export default {
   },
 };
 </script>
+
+<style>
+.wrap{
+  white-space: nowrap; 
+}
+</style>
